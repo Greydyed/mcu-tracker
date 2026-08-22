@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MCU Tracker</title>
+<style>
+:root{--bg:#080b22;--card:#151936;--gold:#e8a33d;--text:#fff;--muted:#c9c4ea}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(#080b22,#05061a);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;padding:18px}
+h1{text-align:center;color:var(--gold);margin:5px 0 15px}
+#progress{text-align:center;color:var(--muted);margin-bottom:18px}
+.card{display:flex;gap:14px;background:var(--card);border-radius:20px;padding:12px;margin:12px 0;box-shadow:0 8px 25px #0005}
+.card.next{outline:2px solid var(--gold)}
+.poster{width:90px;height:135px;object-fit:cover;border-radius:12px;background:#111}
+.info{flex:1}
+.title{font-weight:800;font-size:17px}
+.en{color:var(--muted);font-size:13px;margin-top:5px}
+.meta{color:var(--gold);margin-top:8px}
+button{background:var(--gold);border:0;border-radius:12px;padding:8px 12px;margin-top:10px;font-weight:700}
+.done{opacity:.55}
+</style>
+</head>
+<body>
+<h1>MARVEL MCU</h1>
+<div id="progress">Загрузка...</div>
+<div id="list"></div>
+
+<script>
+const GIST="https://gist.githubusercontent.com/Greydyed/b298d0f03d5a5c27ccb4ae2ee164987a/raw/50f0f0688ea814096dacc8cd31a47c2a77ab4519/mcu_data.json";
+const OMDB="fa6ef37";
+
+async function load(){
+ const data=await fetch(GIST+"?"+Date.now()).then(r=>r.json());
+ const movies=data.movies||[];
+ const watched=movies.filter(x=>x.watched).length;
+ progress.textContent=`${watched} / ${movies.length}`;
+
+ const next=movies.find(x=>!x.watched);
+ list.innerHTML="";
+
+ for(const m of movies){
+  const div=document.createElement("div");
+  div.className="card "+(next&&next.id===m.id?"next ":"")+(m.watched?"done":"");
+  div.innerHTML=`
+  <img class="poster" src="https://img.omdbapi.com/?apikey=${OMDB}&t=${encodeURIComponent(m.title)}&y=${m.year}">
+  <div class="info">
+   <div class="title">${m.ru}</div>
+   <div class="en">${m.title}</div>
+   <div class="meta">${m.year} · ${m.watched?"✓ просмотрено":"▶ дальше смотреть"}</div>
+  </div>`;
+  list.appendChild(div);
+ }
+}
+load();
+</script>
+</body>
+</html>
