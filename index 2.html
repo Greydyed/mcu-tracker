@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCU Tracker</title>
+<style>
+body{margin:0;background:#080b22;color:#fff;font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding:16px}
+h1{text-align:center;color:#e8a33d}
+#progress{text-align:center;color:#c9c4ea;margin:15px}
+.card{display:flex;gap:14px;background:#151936;border-radius:18px;padding:12px;margin:12px 0}
+.card.next{border:2px solid #e8a33d}
+.poster{width:90px;height:135px;object-fit:cover;border-radius:12px;background:#222}
+.title{font-size:17px;font-weight:700}
+.eng{color:#c9c4ea;font-size:13px}
+.meta{margin-top:8px;color:#e8a33d}
+.done{opacity:.55}
+</style>
+</head>
+<body>
+
+<h1>MARVEL MCU</h1>
+<div id="progress">Загрузка...</div>
+<div id="list"></div>
+
+<script>
+const GIST_URL="https://gist.githubusercontent.com/Greydyed/b298d0f03d5a5c27ccb4ae2ee164987a/raw/mcu_data.json";
+const OMDB="fa6ef37";
+
+async function load(){
+  try{
+    const response=await fetch(GIST_URL+"?t="+Date.now());
+    const data=await response.json();
+    const movies=Array.isArray(data.movies)?data.movies:[];
+
+    const watched=movies.filter(m=>m.watched).length;
+    document.getElementById("progress").textContent=watched+" / "+movies.length;
+
+    const next=movies.find(m=>!m.watched);
+    const list=document.getElementById("list");
+
+    for(const movie of movies){
+      const card=document.createElement("div");
+      card.className="card "+(next&&next.id===movie.id?"next ":"")+(movie.watched?"done":"");
+
+      let poster="https://via.placeholder.com/90x135?text=MCU";
+
+      try{
+        const omdb=await fetch(
+          "https://www.omdbapi.com/?t="+encodeURIComponent(movie.title)+"&y="+movie.year+"&apikey="+OMDB
+        ).then(r=>r.json());
+
+        if(omdb.Poster && omdb.Poster!=="N/A"){
+          poster=omdb.Poster;
+        }
+
+        movie.rating=omdb.imdbRating;
+      }catch(e){}
+
+      card.innerHTML=`
+        <img class="poster" src="${poster}">
+        <div>
+          <div class="title">${movie.ru}</div>
+          <div class="eng">${movie.title}</div>
+          <div class="meta">${movie.year} · IMDb ${movie.rating||"—"}<br>
+          ${movie.watched?"✓ просмотрено":"▶ дальше смотреть"}</div>
+        </div>
+      `;
+
+      list.appendChild(card);
+    }
+
+  }catch(e){
+    document.getElementById("progress").textContent="Ошибка загрузки Gist";
+    console.log(e);
+  }
+}
+
+load();
+</script>
+
+</body>
+</html>
