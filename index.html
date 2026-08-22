@@ -242,9 +242,7 @@ const OMDB_TITLES = {
   avengers_doomsday:"Avengers: Doomsday", avengers_secret_wars:"Avengers: Secret Wars"
 };
 
-const GITHUB_TOKEN = "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";
-const GIST_ID = "b298d0f03d5a5c27ccb4ae2ee164987a";
-const GIST_FILENAME = "mcu_data.json";
+const WORKER_URL = "https://mcu-tracker-proxy.mininsergey2812.workers.dev";
 
 let state = { movies:{} };
 let saveTimer = null;
@@ -273,17 +271,9 @@ function savePosterCache(){
 }
 
 async function fetchGistState(){
-  const res = await fetch("https://api.github.com/gists/"+GIST_ID, {
-    headers: {
-      "Authorization": "token "+GITHUB_TOKEN,
-      "Accept": "application/vnd.github+json"
-    }
-  });
-  if(!res.ok) throw new Error("Gist GET failed: "+res.status);
-  const data = await res.json();
-  const file = data.files[GIST_FILENAME];
-  if(!file) throw new Error("Файл "+GIST_FILENAME+" не найден в гисте");
-  const content = JSON.parse(file.content);
+  const res = await fetch(WORKER_URL+"/get");
+  if(!res.ok) throw new Error("Worker GET failed: "+res.status);
+  const content = await res.json();
   const movies = {};
   (content.movies || []).forEach(m=>{
     movies[m.id] = { watched: !!m.watched, me: m.me != null ? m.me : null, her: m.her != null ? m.her : null };
@@ -304,18 +294,12 @@ async function pushGistState(){
       her: e.her
     };
   });
-  const res = await fetch("https://api.github.com/gists/"+GIST_ID, {
-    method: "PATCH",
-    headers: {
-      "Authorization": "token "+GITHUB_TOKEN,
-      "Accept": "application/vnd.github+json",
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      files: { [GIST_FILENAME]: { content: JSON.stringify({ movies: moviesArray }, null, 2) } }
-    })
+  const res = await fetch(WORKER_URL+"/save", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ movies: moviesArray })
   });
-  if(!res.ok) throw new Error("Gist PATCH failed: "+res.status);
+  if(!res.ok) throw new Error("Worker SAVE failed: "+res.status);
 }
 
 function setSyncStatus(text, isError){
