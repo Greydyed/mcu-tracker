@@ -2,292 +2,560 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MCU Tracker</title>
-
+<title>КВМ — трекер просмотра</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
-body{
-  margin:0;
-  background:#080b22;
-  color:white;
-  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-  padding:16px
-}
+  :root{
+    --bg-0:#05061a;
+    --bg-1:#0c0e2b;
+    --bg-2:#12123a;
+    --card:#14173f;
+    --card-done:#171a2f;
+    --line:#2a2d5e;
+    --gold:#e8a33d;
+    --gold-dim:#8a6a35;
+    --violet:#8b6ef2;
+    --violet-dim:#3c3272;
+    --teal:#4fd6c4;
+    --text:#f2eee0;
+    --text-dim:#a6a2c4;
+    --text-faint:#6b6893;
+    --tva-orange:#d97706;
+    --tva-mint:#22d3a5;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg-0);color:var(--text);font-family:'Space Grotesk',sans-serif;}
+  .wrap{max-width:780px;margin:0 auto;padding:28px 16px 60px;}
+  h1{font-family:'Cinzel',serif;font-weight:700;font-size:25px;letter-spacing:.5px;margin:0 0 4px;color:var(--gold);text-align:center;}
+  .subtitle{text-align:center;color:var(--text-dim);font-size:13px;margin:0 0 20px;}
 
-h1{
-  text-align:center;
-  color:#e8a33d;
-}
+  .progress-row{display:flex;align-items:center;gap:12px;margin-bottom:26px;}
+  .progress-track{flex:1;height:8px;background:var(--bg-2);border-radius:5px;overflow:hidden;border:1px solid var(--line);}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--gold-dim),var(--gold));border-radius:5px;transition:width .3s;}
+  .progress-label{font-size:13px;color:var(--text-dim);white-space:nowrap;font-variant-numeric:tabular-nums;}
 
-#progress{
-  text-align:center;
-  color:#c9c4ea;
-  margin:15px;
-}
+  /* ---- Saga: Бесконечность ---- */
+  .saga-infinity-header{position:relative;margin:26px 0 16px;padding:16px 14px;border-radius:12px;
+    background:linear-gradient(135deg,#1a1030,#241238);border:1px solid #3d2a5c;overflow:hidden;}
+  .saga-infinity-header::after{content:"";position:absolute;inset:0;
+    background:radial-gradient(circle at 15% 30%,rgba(59,130,246,.18),transparent 40%),
+               radial-gradient(circle at 40% 70%,rgba(234,179,8,.16),transparent 40%),
+               radial-gradient(circle at 65% 25%,rgba(239,68,68,.16),transparent 40%),
+               radial-gradient(circle at 85% 65%,rgba(217,70,239,.16),transparent 40%),
+               radial-gradient(circle at 30% 90%,rgba(34,197,94,.16),transparent 40%),
+               radial-gradient(circle at 90% 15%,rgba(249,115,22,.16),transparent 40%);
+    pointer-events:none;}
+  .saga-title{font-family:'Cinzel',serif;font-size:16px;letter-spacing:1.5px;text-transform:uppercase;color:#f2eee0;position:relative;}
+  .saga-sub{font-size:11px;color:var(--text-dim);margin-top:3px;position:relative;}
+  .stones-row{display:flex;gap:7px;margin-top:12px;position:relative;}
+  .stone-dot{width:14px;height:14px;border-radius:50%;box-shadow:0 0 8px 1px currentColor;}
 
-.card{
-  background:#151936;
-  border-radius:18px;
-  padding:12px;
-  margin:12px 0;
-  display:flex;
-  gap:14px;
-}
+  /* ---- Saga: Мультивселенная ---- */
+  .saga-multi-header{position:relative;margin:34px 0 16px;padding:16px 14px;border-radius:12px;
+    background:linear-gradient(135deg,#0d1f1a,#0a1a2e);border:1px solid #1f4a3e;overflow:hidden;}
+  .saga-multi-header::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;
+    background:repeating-linear-gradient(90deg,var(--tva-mint) 0 10px,transparent 10px 16px);opacity:.6;}
+  .saga-multi-header .saga-title{color:#d7fff0;}
 
-.poster{
-  width:90px;
-  height:135px;
-  object-fit:cover;
-  border-radius:12px;
-}
+  .card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:14px;margin-bottom:10px;display:flex;gap:12px;transition:.2s;}
+  .card.watched{background:var(--card-done);opacity:.82;}
 
-.info{
-  flex:1;
-}
+  .cover{width:56px;height:56px;border-radius:9px;flex-shrink:0;position:relative;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .cover .letter{font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:rgba(255,255,255,.92);
+    text-shadow:0 1px 3px rgba(0,0,0,.4);}
+  .cover.stone-cover{border:1px solid rgba(255,255,255,.15);}
+  .cover.stone-cover::after{content:"";position:absolute;inset:0;
+    background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.35),transparent 55%);}
+  .cover.tva-cover{border:1px solid rgba(255,255,255,.12);}
+  .cover.tva-cover .variant-tag{position:absolute;bottom:2px;right:3px;font-family:'JetBrains Mono',monospace;
+    font-size:8px;color:rgba(255,255,255,.75);letter-spacing:.5px;}
 
-.title{
-  font-size:18px;
-  font-weight:700;
-}
+  .card-body{flex:1;min-width:0;}
+  .card-top{display:flex;align-items:flex-start;gap:8px;}
+  .idx{font-family:'JetBrains Mono',monospace;color:var(--text-faint);font-size:11px;padding-top:2px;min-width:20px;}
+  .title-block{flex:1;min-width:0;}
+  .title{font-size:14.5px;font-weight:600;color:var(--text);line-height:1.3;}
+  .card.watched .title{text-decoration:line-through;text-decoration-color:var(--gold-dim);color:var(--text-dim);}
+  .meta-row{display:flex;align-items:center;gap:8px;margin-top:2px;flex-wrap:wrap;}
+  .year{font-size:11px;color:var(--text-faint);}
+  .imdb-badge{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--gold);
+    background:rgba(232,163,61,.12);border:1px solid rgba(232,163,61,.3);border-radius:5px;padding:1px 6px;}
+  .imdb-badge.tba{color:var(--text-faint);background:transparent;border-color:var(--line);}
+  .stone-name{font-size:10px;color:var(--text-faint);letter-spacing:.3px;}
+  .badge-soon{font-size:9.5px;padding:2px 6px;border-radius:5px;background:var(--violet-dim);color:#ddd6ff;}
 
-.eng{
-  color:#c9c4ea;
-}
+  .watch-toggle{width:25px;height:25px;border-radius:7px;border:1.5px solid var(--line);background:transparent;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--gold);
+    font-size:13px;transition:.15s;}
+  .watch-toggle.on{background:var(--gold);border-color:var(--gold);color:#241a05;}
 
-.meta{
-  margin-top:8px;
-  color:#e8a33d;
-}
+  .ratings{display:flex;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);}
+  .rate-group{display:flex;align-items:center;gap:7px;}
+  .rate-label{font-size:11.5px;color:var(--text-dim);min-width:52px;}
+  .rate-group.me .rate-label{color:var(--gold);}
+  .rate-group.her .rate-label{color:var(--teal);}
+  select.rate-select{background:var(--bg-2);border:1px solid var(--line);color:var(--text);border-radius:7px;
+    padding:3px 5px;font-family:'Space Grotesk',sans-serif;font-size:12.5px;width:48px;}
+  .rate-group.me select.rate-select{border-color:var(--gold-dim);}
+  .rate-group.her select.rate-select{border-color:var(--teal);}
 
-button{
-  margin-top:8px;
-  background:#e8a33d;
-  border:0;
-  border-radius:10px;
-  padding:8px 12px;
-  font-weight:bold;
-}
+  .note{font-size:11px;color:var(--text-faint);margin:0 0 8px;padding:0 2px;line-height:1.5;}
+  .footer-note{text-align:center;font-size:11px;color:var(--text-faint);margin-top:24px;}
 
-input{
-  width:45px;
-  background:#080b22;
-  color:white;
-  border:1px solid #e8a33d;
-  border-radius:6px;
-  padding:5px;
-}
+  .top-bar{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .settings-btn{background:var(--bg-2);border:1px solid var(--line);color:var(--text-dim);
+    border-radius:8px;padding:6px 11px;font-family:'Space Grotesk',sans-serif;font-size:12px;cursor:pointer;
+    white-space:nowrap;}
+  .settings-btn:hover{color:var(--gold);border-color:var(--gold-dim);}
 
-.watched{
-  opacity:.55;
-}
+  .settings-panel{background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+    margin-bottom:18px;display:none;}
+  .settings-panel.open{display:block;}
+  .settings-panel label{display:block;font-size:12px;color:var(--text-dim);margin-bottom:6px;}
+  .settings-row{display:flex;gap:8px;}
+  .settings-row input{flex:1;background:var(--bg-0);border:1px solid var(--line);color:var(--text);
+    border-radius:7px;padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:12px;}
+  .settings-row button{background:var(--gold);color:#241a05;border:none;border-radius:7px;
+    padding:8px 14px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;cursor:pointer;}
+  .settings-note{font-size:10.5px;color:var(--text-faint);margin-top:8px;line-height:1.5;}
+  .settings-note a{color:var(--teal);}
+  .settings-status{font-size:11px;margin-top:8px;color:var(--teal);}
+
+  .cover{width:56px;height:78px;border-radius:9px;flex-shrink:0;position:relative;
+    display:flex;align-items:flex-end;justify-content:center;overflow:hidden;background-size:cover;
+    background-position:center;}
+  .cover .letter{font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:rgba(255,255,255,.92);
+    text-shadow:0 1px 3px rgba(0,0,0,.4);position:relative;margin-bottom:26px;}
+  .cover.has-poster .letter{display:none;}
+  .cover.has-poster::before{content:"";position:absolute;inset:0;
+    background:linear-gradient(to top,rgba(5,6,26,.85),rgba(5,6,26,0) 55%);}
 </style>
 </head>
-
 <body>
+<div class="wrap">
+  <h1>Кинематографическая вселенная Marvel</h1>
+  <p class="subtitle">Трекер просмотра · порядок выхода в прокат</p>
 
-<h1>MARVEL MCU</h1>
+  <div class="top-bar">
+    <button class="settings-btn" id="settings-toggle">Постеры: настроить ключ OMDb</button>
+  </div>
 
-<div id="progress"></div>
+  <div class="settings-panel" id="settings-panel">
+    <label for="omdb-key-input">Ключ OMDb API (хранится только в этом браузере)</label>
+    <div class="settings-row">
+      <input type="text" id="omdb-key-input" placeholder="например: a1b2c3d4">
+      <button id="omdb-key-save">Сохранить</button>
+    </div>
+    <div class="settings-note">
+      Бесплатный ключ можно получить на <a href="https://www.omdbapi.com/apikey.aspx" target="_blank">omdbapi.com/apikey.aspx</a>.
+      После сохранения постеры и рейтинг будут подтягиваться прямо в твоём браузере, по твоему ключу — никуда не передаются и не публикуются.
+    </div>
+    <div class="settings-status" id="settings-status"></div>
+  </div>
 
-<div id="list"></div>
+  <div class="progress-row">
+    <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="progress-label" id="progress-label">0 / 0</div>
+  </div>
+  <p class="note" id="sync-status" style="text-align:center;">Синхронизация...</p>
 
+  <div id="list-area"></div>
+
+  <p class="footer-note">Прогресс и оценки сохраняются автоматически на этом устройстве.</p>
+</div>
 
 <script>
+const STONES = [
+  {name:"Пространство", color:"#3b82f6"},
+  {name:"Разум", color:"#eab308"},
+  {name:"Реальность", color:"#ef4444"},
+  {name:"Сила", color:"#d946ef"},
+  {name:"Время", color:"#22c55e"},
+  {name:"Душа", color:"#f97316"}
+];
 
-const GIST_URL =
-"https://gist.githubusercontent.com/Greydyed/b298d0f03d5a5c27ccb4ae2ee164987a/raw/57555f9a9bbc77149970fa19b7e4f1494fb4ae15/mcu_data.json";
+const MOVIES = [
+  {id:"iron_man", title:"Железный человек", year:2008, saga:"infinity", imdb:7.9},
+  {id:"hulk", title:"Невероятный Халк", year:2008, saga:"infinity", imdb:6.7},
+  {id:"iron_man2", title:"Железный человек 2", year:2010, saga:"infinity", imdb:7.0},
+  {id:"thor1", title:"Тор", year:2011, saga:"infinity", imdb:7.0},
+  {id:"cap1", title:"Первый мститель", year:2011, saga:"infinity", imdb:6.9},
+  {id:"avengers1", title:"Мстители", year:2012, saga:"infinity", imdb:8.0},
+  {id:"iron_man3", title:"Железный человек 3", year:2013, saga:"infinity", imdb:7.1},
+  {id:"thor2", title:"Тор 2: Царство тьмы", year:2013, saga:"infinity", imdb:6.9},
+  {id:"cap2", title:"Первый мститель: Другая война", year:2014, saga:"infinity", imdb:7.7},
+  {id:"gotg1", title:"Стражи Галактики", year:2014, saga:"infinity", imdb:7.9},
+  {id:"avengers2", title:"Мстители: Эра Альтрона", year:2015, saga:"infinity", imdb:7.3},
+  {id:"antman1", title:"Человек-муравей", year:2015, saga:"infinity", imdb:7.3},
+  {id:"cap3", title:"Первый мститель: Противостояние", year:2016, saga:"infinity", imdb:7.8},
+  {id:"dr_strange1", title:"Доктор Стрэндж", year:2016, saga:"infinity", imdb:7.5},
+  {id:"gotg2", title:"Стражи Галактики. Часть 2", year:2017, saga:"infinity", imdb:7.6},
+  {id:"spiderman_home", title:"Человек-паук: Возвращение домой", year:2017, saga:"infinity", imdb:7.4},
+  {id:"thor3", title:"Тор: Рагнарёк", year:2017, saga:"infinity", imdb:7.9},
+  {id:"black_panther1", title:"Чёрная пантера", year:2018, saga:"infinity", imdb:7.3},
+  {id:"infinity_war", title:"Мстители: Война бесконечности", year:2018, saga:"infinity", imdb:8.4},
+  {id:"antman2", title:"Человек-муравей и Оса", year:2018, saga:"infinity", imdb:7.1},
+  {id:"captain_marvel", title:"Капитан Марвел", year:2019, saga:"infinity", imdb:6.8},
+  {id:"endgame", title:"Мстители: Финал", year:2019, saga:"infinity", imdb:8.4},
+  {id:"spiderman_ffh", title:"Человек-паук: Вдали от дома", year:2019, saga:"infinity", imdb:7.4},
 
+  {id:"black_widow", title:"Чёрная вдова", year:2021, saga:"multi", imdb:6.7},
+  {id:"shang_chi", title:"Шан-Чи и легенда десяти колец", year:2021, saga:"multi", imdb:7.4},
+  {id:"eternals", title:"Вечные", year:2021, saga:"multi", imdb:6.3},
+  {id:"spiderman_nwh", title:"Человек-паук: Нет пути домой", year:2021, saga:"multi", imdb:8.2},
+  {id:"dr_strange2", title:"Доктор Стрэндж: В мультивселенной безумия", year:2022, saga:"multi", imdb:6.9},
+  {id:"thor4", title:"Тор: Любовь и гром", year:2022, saga:"multi", imdb:6.2},
+  {id:"wakanda_forever", title:"Чёрная пантера: Ваканда навсегда", year:2022, saga:"multi", imdb:7.3},
+  {id:"antman3", title:"Человек-муравей и Оса: Квантомания", year:2023, saga:"multi", imdb:6.1},
+  {id:"gotg3", title:"Стражи Галактики. Часть 3", year:2023, saga:"multi", imdb:7.9},
+  {id:"the_marvels", title:"Марвелы", year:2023, saga:"multi", imdb:5.7},
+  {id:"deadpool_wolverine", title:"Дэдпул и Росомаха", year:2024, saga:"multi", imdb:7.8},
+  {id:"cap4", title:"Первый мститель: Дивный новый мир", year:2025, saga:"multi", imdb:6.1},
+  {id:"thunderbolts", title:"Громовержцы*", year:2025, saga:"multi", imdb:7.5},
+  {id:"fantastic4", title:"Фантастическая четвёрка: Первые шаги", year:2025, saga:"multi", imdb:6.9},
+  {id:"spiderman_new_day", title:"Человек-паук: Новый день", year:2026, saga:"multi", imdb:8.2},
+  {id:"avengers_doomsday", title:"Мстители: Доктор Дум", year:2026, saga:"multi", imdb:null},
+  {id:"avengers_secret_wars", title:"Мстители: Секретные войны", year:2027, saga:"multi", imdb:null, soon:true}
+];
 
-const OMDB="fa6ef37";
-
-
-let saved =
-JSON.parse(localStorage.getItem("mcu_scores") || "{}");
-
-
-async function load(){
-
-const data =
-await fetch(GIST_URL+"?t="+Date.now())
-.then(r=>r.json());
-
-
-const movies=data.movies;
-
-
-const list=document.getElementById("list");
-
-
-function updateProgress(){
-
-let count =
-movies.filter(m=>saved[m.id]?.watched).length;
-
-document.getElementById("progress").innerHTML =
-"Просмотрено: "+count+" / "+movies.length;
-
-}
-
-
-for(const movie of movies){
-
-let old=saved[movie.id] || {
- watched:false,
- sergey:"",
- ulyana:""
+const OMDB_TITLES = {
+  iron_man:"Iron Man", hulk:"The Incredible Hulk", iron_man2:"Iron Man 2", thor1:"Thor",
+  cap1:"Captain America: The First Avenger", avengers1:"The Avengers", iron_man3:"Iron Man 3",
+  thor2:"Thor: The Dark World", cap2:"Captain America: The Winter Soldier",
+  gotg1:"Guardians of the Galaxy", avengers2:"Avengers: Age of Ultron", antman1:"Ant-Man",
+  cap3:"Captain America: Civil War", dr_strange1:"Doctor Strange",
+  gotg2:"Guardians of the Galaxy Vol. 2", spiderman_home:"Spider-Man: Homecoming",
+  thor3:"Thor: Ragnarok", black_panther1:"Black Panther", infinity_war:"Avengers: Infinity War",
+  antman2:"Ant-Man and the Wasp", captain_marvel:"Captain Marvel", endgame:"Avengers: Endgame",
+  spiderman_ffh:"Spider-Man: Far From Home", black_widow:"Black Widow",
+  shang_chi:"Shang-Chi and the Legend of the Ten Rings", eternals:"Eternals",
+  spiderman_nwh:"Spider-Man: No Way Home",
+  dr_strange2:"Doctor Strange in the Multiverse of Madness", thor4:"Thor: Love and Thunder",
+  wakanda_forever:"Black Panther: Wakanda Forever",
+  antman3:"Ant-Man and the Wasp: Quantumania", gotg3:"Guardians of the Galaxy Vol. 3",
+  the_marvels:"The Marvels", deadpool_wolverine:"Deadpool & Wolverine",
+  cap4:"Captain America: Brave New World", thunderbolts:"Thunderbolts",
+  fantastic4:"The Fantastic Four: First Steps", spiderman_new_day:"Spider-Man: Brand New Day",
+  avengers_doomsday:"Avengers: Doomsday", avengers_secret_wars:"Avengers: Secret Wars"
 };
 
+const GITHUB_TOKEN = "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";
+const GIST_ID = "b298d0f03d5a5c27ccb4ae2ee164987a";
+const GIST_FILENAME = "mcu_data.json";
 
-let poster=
-"https://via.placeholder.com/90x135?text=MCU";
+let state = { movies:{} };
+let saveTimer = null;
+let omdbKey = "";
+let posterCache = {};
+let syncStatusEl = null;
 
+async function loadOmdbKey(){
+  try{
+    const raw = localStorage.getItem("omdb-key");
+    if(raw) omdbKey = raw;
+  }catch(e){}
+  const input = document.getElementById("omdb-key-input");
+  if(omdbKey) input.value = omdbKey;
+}
 
-let rating="—";
+async function loadPosterCache(){
+  try{
+    const raw = localStorage.getItem("omdb-poster-cache");
+    if(raw) posterCache = JSON.parse(raw);
+  }catch(e){}
+}
 
+function savePosterCache(){
+  try{ localStorage.setItem("omdb-poster-cache", JSON.stringify(posterCache)); }catch(e){}
+}
 
-try{
+async function fetchGistState(){
+  const res = await fetch("https://api.github.com/gists/"+GIST_ID, {
+    headers: {
+      "Authorization": "token "+GITHUB_TOKEN,
+      "Accept": "application/vnd.github+json"
+    }
+  });
+  if(!res.ok) throw new Error("Gist GET failed: "+res.status);
+  const data = await res.json();
+  const file = data.files[GIST_FILENAME];
+  if(!file) throw new Error("Файл "+GIST_FILENAME+" не найден в гисте");
+  const content = JSON.parse(file.content);
+  const movies = {};
+  (content.movies || []).forEach(m=>{
+    movies[m.id] = { watched: !!m.watched, me: m.me != null ? m.me : null, her: m.her != null ? m.her : null };
+  });
+  return movies;
+}
 
-let omdb =
-await fetch(
-"https://www.omdbapi.com/?t="+
-encodeURIComponent(movie.title)+
-"&y="+movie.year+
-"&apikey="+OMDB
-).then(r=>r.json());
+async function pushGistState(){
+  const moviesArray = MOVIES.map(m=>{
+    const e = state.movies[m.id] || {watched:false, me:null, her:null};
+    return {
+      id: m.id,
+      title: OMDB_TITLES[m.id] || m.title,
+      ru: m.title,
+      year: m.year,
+      watched: e.watched,
+      me: e.me,
+      her: e.her
+    };
+  });
+  const res = await fetch("https://api.github.com/gists/"+GIST_ID, {
+    method: "PATCH",
+    headers: {
+      "Authorization": "token "+GITHUB_TOKEN,
+      "Accept": "application/vnd.github+json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      files: { [GIST_FILENAME]: { content: JSON.stringify({ movies: moviesArray }, null, 2) } }
+    })
+  });
+  if(!res.ok) throw new Error("Gist PATCH failed: "+res.status);
+}
 
+function setSyncStatus(text, isError){
+  if(!syncStatusEl) syncStatusEl = document.getElementById("sync-status");
+  if(!syncStatusEl) return;
+  syncStatusEl.textContent = text;
+  syncStatusEl.style.color = isError ? "#ef4444" : "var(--teal)";
+}
 
-if(omdb.Poster && omdb.Poster!="N/A")
-poster=omdb.Poster;
+async function loadState(){
+  setSyncStatus("Синхронизация...");
+  try{
+    state.movies = await fetchGistState();
+    setSyncStatus("Синхронизировано с гистом");
+  }catch(e){
+    setSyncStatus("Не удалось загрузить из гиста: "+e.message, true);
+  }
+  await loadOmdbKey();
+  await loadPosterCache();
+  render();
+  if(omdbKey) fetchAllPosters();
+}
 
+async function fetchAllPosters(){
+  const englishTitles = OMDB_TITLES;
+  for(const m of MOVIES){
+    const cached = posterCache[m.id];
+    if(cached && cached.ts && (Date.now() - cached.ts) < 1000*60*60*24*30) continue;
+    const enTitle = englishTitles[m.id] || m.title;
+    try{
+      const url = "https://www.omdbapi.com/?t="+encodeURIComponent(enTitle)+"&y="+m.year+"&apikey="+omdbKey;
+      const res = await fetch(url);
+      const data = await res.json();
+      const poster = (data && data.Poster && data.Poster !== "N/A") ? data.Poster : null;
+      const rating = (data && data.imdbRating && data.imdbRating !== "N/A") ? data.imdbRating : null;
+      posterCache[m.id] = { poster, rating, ts: Date.now() };
+      updateCardVisual(m.id);
+    }catch(e){
+      posterCache[m.id] = { poster:null, rating:null, ts: Date.now() };
+    }
+  }
+  savePosterCache();
+}
 
-rating=omdb.imdbRating || "—";
+function updateCardVisual(id){
+  const coverEl = document.querySelector('.cover[data-cover-id="'+id+'"]');
+  if(!coverEl) return;
+  const cached = posterCache[id];
+  if(cached && cached.poster){
+    coverEl.classList.add("has-poster");
+    coverEl.style.backgroundImage = "url('"+cached.poster+"')";
+  }
+  const badge = document.querySelector('.imdb-badge[data-imdb-id="'+id+'"]');
+  if(badge && cached && cached.rating){
+    badge.textContent = "IMDb "+cached.rating;
+    badge.classList.remove("tba");
+  }
+}
 
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  setSyncStatus("Сохраняю...");
+  saveTimer = setTimeout(async ()=>{
+    try{
+      await pushGistState();
+      setSyncStatus("Сохранено в гисте");
+    }catch(e){
+      setSyncStatus("Ошибка сохранения: "+e.message, true);
+    }
+  }, 600);
+}
 
-}catch(e){}
-
-
-
-let card=document.createElement("div");
-
-card.className="card "+
-(old.watched?"watched":"");
-
-
-card.innerHTML=`
-
-<img class="poster" src="${poster}">
-
-<div class="info">
-
-<div class="title">
-${movie.ru}
-</div>
-
-<div class="eng">
-${movie.title}
-</div>
-
-
-<div class="meta">
-${movie.year}
-<br>
-IMDb: ${rating}
-</div>
-
-
-<div>
-<label>
-<input type="checkbox" 
-${old.watched?"checked":""}>
-Просмотрено
-</label>
-</div>
-
-
-<div>
-Сергей ⭐ 
-<input value="${old.sergey}" 
-placeholder="0-10"
-class="sergey">
-</div>
-
-
-<div>
-Ульяна ⭐ 
-<input value="${old.ulyana}" 
-placeholder="0-10"
-class="ulyana">
-</div>
-
-
-</div>
-`;
-
-
-
-let checkbox =
-card.querySelector("input[type=checkbox]");
-
-
-let sergey =
-card.querySelector(".sergey");
-
-
-let ulyana =
-card.querySelector(".ulyana");
-
-
-
-function save(){
-
-saved[movie.id]={
- watched:checkbox.checked,
- sergey:sergey.value,
- ulyana:ulyana.value
-};
-
-
-localStorage.setItem(
-"mcu_scores",
-JSON.stringify(saved)
-);
-
-
-card.className=
-"card "+
-(checkbox.checked?"watched":"");
-
-
-updateProgress();
-
+function getEntry(id){
+  if(!state.movies[id]) state.movies[id] = {watched:false, me:null, her:null};
+  return state.movies[id];
 }
 
 
 
-checkbox.onchange=save;
-
-sergey.onchange=save;
-
-ulyana.onchange=save;
-
-
-
-list.appendChild(card);
-
-
+function toggleWatched(id){
+  const e = getEntry(id);
+  e.watched = !e.watched;
+  scheduleSave();
+  render();
 }
 
-
-updateProgress();
-
-
+function setRating(id, who, val){
+  const e = getEntry(id);
+  e[who] = val === "" ? null : Number(val);
+  scheduleSave();
+  render();
 }
 
+function ratingOptions(current){
+  let html = '<option value="">-</option>';
+  for(let i=1;i<=10;i++){
+    html += '<option value="'+i+'"'+(current===i?' selected':'')+'>'+i+'</option>';
+  }
+  return html;
+}
 
-load();
+function letterFor(title){
+  return title.trim().charAt(0).toUpperCase();
+}
 
+function render(){
+  let total = 0, watched = 0;
+  MOVIES.forEach(m=>{ total++; if(state.movies[m.id] && state.movies[m.id].watched) watched++; });
+  document.getElementById("progress-fill").style.width = (total? (watched/total*100):0)+"%";
+  document.getElementById("progress-label").textContent = watched+" / "+total;
 
+  const listArea = document.getElementById("list-area");
+  listArea.innerHTML = "";
+
+  let infinityIdx = 0;
+  let multiIdx = 0;
+  let sagaStarted = { infinity:false, multi:false };
+
+  MOVIES.forEach((m, i)=>{
+    if(m.saga === "infinity" && !sagaStarted.infinity){
+      sagaStarted.infinity = true;
+      const header = document.createElement("div");
+      header.className = "saga-infinity-header";
+      header.innerHTML =
+        '<div class="saga-title">Сага Бесконечности</div>'+
+        '<div class="saga-sub">Шесть Камней, собранных по крупицам</div>'+
+        '<div class="stones-row">'+
+          STONES.map(s=>'<div class="stone-dot" style="background:'+s.color+';color:'+s.color+'"></div>').join('')+
+        '</div>';
+      listArea.appendChild(header);
+    }
+    if(m.saga === "multi" && !sagaStarted.multi){
+      sagaStarted.multi = true;
+      const header = document.createElement("div");
+      header.className = "saga-multi-header";
+      header.innerHTML =
+        '<div class="saga-title">Сага Мультивселенной</div>'+
+        '<div class="saga-sub">Ветвящиеся линии времени, TVA и не только</div>';
+      listArea.appendChild(header);
+    }
+
+    const e = getEntry(m.id);
+    const card = document.createElement("div");
+    card.className = "card" + (e.watched ? " watched" : "");
+
+    const cached = posterCache[m.id];
+    const hasPoster = cached && cached.poster;
+    let coverHtml;
+    if(m.saga === "infinity"){
+      const stone = STONES[infinityIdx % STONES.length];
+      infinityIdx++;
+      const bg = hasPoster ? "" : "background:radial-gradient(circle at 35% 30%,"+stone.color+"cc,"+stone.color+"55 60%,#0c0e2b 100%);";
+      coverHtml =
+        '<div class="cover stone-cover'+(hasPoster?' has-poster':'')+'" data-cover-id="'+m.id+'" style="'+bg+(hasPoster?"background-image:url('"+cached.poster+"')":"")+'">'+
+          '<span class="letter">'+letterFor(m.title)+'</span>'+
+        '</div>';
+    } else {
+      multiIdx++;
+      const tvaColor = multiIdx % 2 === 0 ? "var(--tva-mint)" : "var(--tva-orange)";
+      const bg = hasPoster ? "" : "background:linear-gradient(150deg,#0a1a2e,"+(multiIdx%2===0 ? '#123d33' : '#3d2a10')+");";
+      coverHtml =
+        '<div class="cover tva-cover'+(hasPoster?' has-poster':'')+'" data-cover-id="'+m.id+'" style="'+bg+(hasPoster?"background-image:url('"+cached.poster+"')":"")+'">'+
+          '<span class="letter" style="color:'+tvaColor+'">'+letterFor(m.title)+'</span>'+
+          '<span class="variant-tag">ВАР-'+String(multiIdx).padStart(2,"0")+'</span>'+
+        '</div>';
+    }
+
+    const soonBadge = m.soon ? '<span class="badge-soon">ожидается</span>' : '';
+    const liveRating = cached && cached.rating ? cached.rating : (m.imdb ? m.imdb.toFixed(1) : null);
+    const imdbHtml = liveRating
+      ? '<span class="imdb-badge" data-imdb-id="'+m.id+'">IMDb '+liveRating+'</span>'
+      : '<span class="imdb-badge tba" data-imdb-id="'+m.id+'">IMDb —</span>';
+    const stoneNameHtml = (m.saga === "infinity")
+      ? '<span class="stone-name">'+STONES[(infinityIdx-1) % STONES.length].name+'</span>'
+      : '';
+
+    card.innerHTML =
+      coverHtml +
+      '<div class="card-body">'+
+        '<div class="card-top">'+
+          '<div class="idx">'+String(i+1).padStart(2,"0")+'</div>'+
+          '<div class="title-block">'+
+            '<div class="title">'+m.title+soonBadge+'</div>'+
+            '<div class="meta-row">'+
+              '<span class="year">'+m.year+'</span>'+
+              imdbHtml+
+              stoneNameHtml+
+            '</div>'+
+          '</div>'+
+          '<button class="watch-toggle'+(e.watched?" on":"")+'" aria-label="Отметить просмотренным" data-id="'+m.id+'">'+(e.watched?"&#10003;":"")+'</button>'+
+        '</div>'+
+        '<div class="ratings">'+
+          '<div class="rate-group me">'+
+            '<span class="rate-label">Сергей</span>'+
+            '<select class="rate-select" data-id="'+m.id+'" data-who="me">'+ratingOptions(e.me)+'</select>'+
+          '</div>'+
+          '<div class="rate-group her">'+
+            '<span class="rate-label">Ульяна</span>'+
+            '<select class="rate-select" data-id="'+m.id+'" data-who="her">'+ratingOptions(e.her)+'</select>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+
+    listArea.appendChild(card);
+  });
+
+  listArea.querySelectorAll(".watch-toggle").forEach(btn=>{
+    btn.addEventListener("click", ()=> toggleWatched(btn.dataset.id));
+  });
+  listArea.querySelectorAll(".rate-select").forEach(sel=>{
+    sel.addEventListener("change", ()=> setRating(sel.dataset.id, sel.dataset.who, sel.value));
+  });
+}
+
+document.getElementById("settings-toggle").addEventListener("click", ()=>{
+  document.getElementById("settings-panel").classList.toggle("open");
+});
+
+document.getElementById("omdb-key-save").addEventListener("click", async ()=>{
+  const val = document.getElementById("omdb-key-input").value.trim();
+  const status = document.getElementById("settings-status");
+  if(!val){
+    status.textContent = "Введи ключ перед сохранением.";
+    return;
+  }
+  omdbKey = val;
+  try{
+    localStorage.setItem("omdb-key", omdbKey);
+    status.textContent = "Ключ сохранён. Загружаю постеры и рейтинги...";
+    fetchAllPosters().then(()=>{
+      status.textContent = "Готово. Постеры подтянуты.";
+    }).catch(e=>{
+      status.textContent = "Ошибка при загрузке постеров: " + (e && e.message ? e.message : String(e));
+    });
+  }catch(e){
+    status.textContent = "Ошибка: " + (e && e.message ? e.message : String(e));
+  }
+});
+
+loadState();
 </script>
-
 </body>
 </html>
